@@ -1,0 +1,92 @@
+{% extends "admin_base.html" %}
+{% block title %}Form #{{ form.id }}{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow ">
+
+  <!-- Header -->
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold">Form #{{ form.id }}</h2>
+    <p class="text-sm text-gray-600">
+      Submitted by: <span class="font-medium">{{ user.email }}</span>
+    </p>
+    <p class="text-xs text-gray-400">
+      Created at: {{ form.created_at.strftime('%Y-%m-%d %H:%M') if form.created_at else '-' }}
+    </p>
+  </div>
+
+  <!-- Editable Form -->
+  <form method="POST"
+        action="{{ url_for('admin_form_update', form_id=form.id) }}"
+        class="space-y-6">
+
+    <!-- Dynamic editable fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% for key, value in form.items() %}
+        {% if key not in [
+          'id','user_id','status','created_at','admin_remark'
+        ] %}
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">
+              {{ key.replace('_',' ').title() }}
+            </label>
+
+            {% if value is string and value|length > 80 %}
+              <!-- Textarea for long text -->
+              <textarea
+                name="{{ key }}"
+                rows="3"
+                class="w-full border px-3 py-2 rounded text-sm"
+              >{{ value }}</textarea>
+            {% else %}
+              <input
+                type="text"
+                name="{{ key }}"
+                value="{{ value }}"
+                class="w-full border px-3 py-2 rounded text-sm"
+              />
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Status -->
+    <div>
+      <label class="block text-sm font-medium mb-1">Status</label>
+      <select name="status" class="w-full border px-3 py-2 rounded">
+        <option value="open" {% if form.status=='open' %}selected{% endif %}>Open</option>
+        <option value="in_progress" {% if form.status=='in_progress' %}selected{% endif %}>In Progress</option>
+        <option value="resolved" {% if form.status=='resolved' %}selected{% endif %}>Resolved</option>
+      </select>
+    </div>
+
+    <!-- Admin Remark -->
+    <div>
+      <label class="block text-sm font-medium mb-1">Admin Remark</label>
+      <textarea
+        name="admin_remark"
+        rows="4"
+        class="w-full border px-3 py-2 rounded"
+      >{{ form.admin_remark or '' }}</textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 pt-4">
+      <button
+        type="submit"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded"
+      >
+        Save Changes
+      </button>
+
+      <a href="{{ url_for('admin_forms') }}"
+         class="px-5 py-2 border rounded text-gray-700 hover:bg-gray-50">
+        Back
+      </a>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}

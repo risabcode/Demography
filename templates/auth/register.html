@@ -1,0 +1,23 @@
+{% extends "auth_base.html" %}
+{% block title %}Register - Demograph{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+  <h2 class="text-2xl mb-4">Register</h2>
+  <form method="post" enctype="multipart/form-data">
+    <label class="block mb-2">Full Name
+      <input name="name" required class="w-full border px-3 py-2 rounded mt-1" />
+    </label>
+    <label class="block mb-2">Email
+      <input name="email" type="email" required class="w-full border px-3 py-2 rounded mt-1" />
+    </label>
+    <label class="block mb-2">Password
+      <input name="password" type="password" required class="w-full border px-3 py-2 rounded mt-1" />
+    </label>
+    <label class="block mb-4">Profile Photo (optional)
+      <input name="profile_photo" type="file" accept="image/*" class="w-full" />
+    </label>
+    <button class="w-full bg-blue-600 text-white py-2 rounded">Register</button>
+  </form>
+  <p class="mt-4 text-sm">Already have an account? <a href="{{ url_for('login') }}" class="text-blue-600">Login</a></p>
+</div>
+{% endblock %}

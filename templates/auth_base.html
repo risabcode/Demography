@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Demograph{% endblock %}</title>
+
+  <!-- Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    body { font-family: 'Poppins', system-ui, sans-serif; }
+
+    .glass {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(14px) saturate(150%);
+      -webkit-backdrop-filter: blur(14px) saturate(150%);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .glass-strong {
+      background: rgba(15,23,42,0.85);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-900 via-slate-900 to-sky-950 flex items-center justify-center p-6 text-white">
+
+  <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-10">
+
+    <!-- LEFT (branding) -->
+    <div class="hidden md:flex flex-col justify-center gap-6">
+      <h1 class="text-4xl font-semibold">Demograph</h1>
+      <p class="text-indigo-200/80">
+        Secure analytics platform with privacy-first dashboards.
+      </p>
+
+      <div class="glass rounded-2xl p-6">
+        <p class="text-sm text-indigo-100/80">
+          Access insights, reports and demographic analytics in a clean,
+          secure, enterprise-ready environment.
+        </p>
+      </div>
+    </div>
+
+    <!-- RIGHT (FORM CARD) -->
+    <div class="glass-strong rounded-3xl p-8 shadow-2xl">
+
+      <h2 class="text-2xl font-semibold mb-1">Welcome back</h2>
+      <p class="text-sm text-indigo-200/70 mb-6">
+        Sign in to continue to Demograph
+      </p>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="space-y-3 mb-4">
+            {% for category, message in messages %}
+              <div class="rounded-xl px-4 py-3 text-sm
+                {% if category=='success' %} bg-emerald-600/20 text-emerald-200
+                {% elif category=='danger' %} bg-rose-600/20 text-rose-200
+                {% else %} bg-sky-600/20 text-sky-200 {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- FORM -->
+      <form method="POST" action="/login" class="space-y-5">
+
+        <!-- EMAIL -->
+        <div>
+          <label for="email" class="block text-xs font-medium text-indigo-200 mb-1">
+            Email address
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="you@company.com"
+            class="w-full rounded-xl px-4 py-3
+                   bg-slate-100 text-slate-900
+                   placeholder-slate-500
+                   border border-slate-300
+                   focus:ring-2 focus:ring-indigo-500
+                   outline-none transition"
+          />
+        </div>
+
+        <!-- PASSWORD -->
+        <div>
+          <label for="password" class="block text-xs font-medium text-indigo-200 mb-1">
+            Password
+          </label>
+          <div class="relative">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              placeholder="Enter your password"
+              class="w-full rounded-xl px-4 py-3 pr-12
+                     bg-slate-100 text-slate-900
+                     placeholder-slate-500
+                     border border-slate-300
+                     focus:ring-2 focus:ring-indigo-500
+                     outline-none transition"
+            />
+            <button type="button" onclick="togglePassword()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900">
+              <i id="pwIcon" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- REMEMBER -->
+        <label class="flex items-center gap-2 text-sm text-indigo-200">
+          <input type="checkbox" class="accent-indigo-500">
+          Remember me
+        </label>
+
+        <!-- SUBMIT -->
+        <button type="submit"
+          class="w-full rounded-xl py-3 font-semibold text-white
+                 bg-gradient-to-r from-indigo-500 to-cyan-400
+                 hover:scale-[1.02] transition">
+          Sign in
+        </button>
+
+        <p class="text-xs text-center text-indigo-200/60">
+          By continuing, you agree to our
+          <a href="#" class="underline">Terms</a> and
+          <a href="#" class="underline">Privacy Policy</a>.
+        </p>
+
+      </form>
+
+      <div class="mt-6 text-xs text-indigo-200/60 text-center">
+        © {{ now().year if now else '' }} Demograph
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const pw = document.getElementById('password');
+      const icon = document.getElementById('pwIcon');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+      } else {
+        pw.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+      }
+    }
+  </script>
+
+</body>
+</html>

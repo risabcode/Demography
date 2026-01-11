@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow w-full ">
+  <h2 class="text-xl mb-4 font-semibold">Your Profile</h2>
+
+  <!-- Profile Photo & Update -->
+  <div class="flex items-center space-x-6 mb-6">
+    {% if user.profile_photo %}
+      <img src="{{ url_for('uploaded_file', filename=user.profile_photo) }}" class="w-28 h-28 rounded-full object-cover">
+    {% else %}
+      <div class="w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-2xl">U</div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" class="flex-1">
+      <label class="block mb-2 font-medium">Update Profile Photo
+        <input name="profile_photo" type="file" accept="image/*" class="w-full border px-3 py-2 rounded mt-1" />
+      </label>
+      <button class="bg-blue-600 text-white py-2 px-4 rounded">Upload</button>
+    </form>
+  </div>
+
+  <!-- User Details Table -->
+  <h3 class="text-lg font-semibold mb-2">Account Details</h3>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 table-auto">
+      <tbody class="divide-y divide-gray-200">
+        <tr>
+          <td class="px-4 py-2 font-medium text-gray-700">ID</td>
+          <td class="px-4 py-2 text-gray-800">{{ user.id }}</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2 font-medium text-gray-700">Name</td>
+          <td class="px-4 py-2 text-gray-800">{{ user.name }}</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2 font-medium text-gray-700">Email</td>
+          <td class="px-4 py-2 text-gray-800">{{ user.email }}</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2 font-medium text-gray-700">Role</td>
+          <td class="px-4 py-2 text-gray-800 capitalize">{{ user.role }}</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2 font-medium text-gray-700">Profile Photo</td>
+          <td class="px-4 py-2 text-gray-800">
+            {% if user.profile_photo %}
+              <img src="{{ url_for('uploaded_file', filename=user.profile_photo) }}" class="w-16 h-16 rounded-full object-cover">
+            {% else %}
+              <span class="text-gray-500">No photo uploaded</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2 font-medium text-gray-700">Created At</td>
+          <td class="px-4 py-2 text-gray-800">{{ user.created_at }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Back to Dashboard -->
+  <div class="mt-4">
+    <a href="{{ url_for('user_dashboard') }}" class="inline-block bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700">
+      Back to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

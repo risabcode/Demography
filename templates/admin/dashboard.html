@@ -1,0 +1,392 @@
+{% extends "admin_base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6 w-full">
+
+  <!-- MASTER TIME RANGE DROPDOWN -->
+  <div class="bg-white p-4 rounded shadow">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <h3 class="font-bold text-lg">Dashboard Overview</h3>
+      <div class="flex items-center gap-2">
+        <label for="masterTimeRange" class="text-sm font-medium text-gray-700">Time Range:</label>
+        <select id="masterTimeRange" class="border border-gray-300 px-4 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="1">Last 1 Day</option>
+          <option value="7" selected>Last 1 Week</option>
+          <option value="30">Last 1 Month</option>
+          <option value="365">Last 1 Year</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS CARDS -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- USERS -->
+    <a href="{{ url_for('admin_users') }}" class="block bg-white p-6 rounded shadow hover:bg-gray-50 transition">
+      <h4 class="font-bold text-gray-700">Total Users</h4>
+      <p class="text-3xl mt-2 text-blue-600 font-semibold">{{ stats.users }}</p>
+      <p class="text-sm text-gray-500 mt-1">Click to manage users</p>
+    </a>
+
+    <!-- FORMS RADIAL CHART -->
+    <div class="bg-white p-6 rounded shadow flex flex-col">
+      <h4 class="font-bold text-gray-700 mb-1">Form Statuses</h4>
+      <p class="text-xs text-gray-500 mb-3">Status distribution of all forms</p>
+      <div class="flex-1 flex items-center justify-center">
+        <canvas id="formsChart" class="max-w-[200px] max-h-[200px]"></canvas>
+      </div>
+    </div>
+
+    <!-- TICKETS RADIAL CHART -->
+    <div class="bg-white p-6 rounded shadow flex flex-col">
+      <h4 class="font-bold text-gray-700 mb-1">Ticket Statuses</h4>
+      <p class="text-xs text-gray-500 mb-3">Status distribution of all tickets</p>
+      <div class="flex-1 flex items-center justify-center">
+        <canvas id="ticketsChart" class="max-w-[200px] max-h-[200px]"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===========================
+       Daily Analytics
+       Full width line charts
+       =========================== -->
+  <div class="bg-white p-4 rounded shadow flex flex-col gap-6">
+    <div>
+      <h3 class="font-bold mb-1 text-lg">Daily Analytics</h3>
+      <p class="text-xs text-gray-500">Trend of forms and tickets over time</p>
+    </div>
+
+    <!-- Daily Forms Line Chart -->
+    <div>
+      <h4 class="font-semibold text-sm text-gray-700 mb-2">Forms Submitted Per Day</h4>
+      <div class="w-full h-60 sm:h-72">
+        <canvas id="dailyFormsChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+
+    <!-- Daily Tickets Line Chart -->
+    <div>
+      <h4 class="font-semibold text-sm text-gray-700 mb-2">Tickets Raised Per Day</h4>
+      <div class="w-full h-60 sm:h-72">
+        <canvas id="dailyTicketsChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT FORMS -->
+  <div class="bg-white p-4 rounded shadow">
+    <div class="mb-3">
+      <h3 class="font-bold">Recent Forms</h3>
+      <p class="text-xs text-gray-500">Latest form submissions</p>
+    </div>
+    {% if forms %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm table-auto border-collapse">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-2 text-left border-b">ID</th>
+              <th class="p-2 text-left border-b">User Email</th>
+              <th class="p-2 text-left border-b">Status</th>
+              <th class="p-2 text-left border-b">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in forms %}
+              <tr class="border-t hover:bg-gray-50">
+                <td class="p-2 border-b">{{ f.id }}</td>
+                <td class="p-2 border-b">{{ f.email }}</td>
+                <td class="p-2 border-b capitalize font-semibold">{{ f.status }}</td>
+                <td class="p-2 border-b">
+                  <a href="{{ url_for('admin_form_detail', form_id=f.id) }}" class="text-blue-600 hover:underline">View</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-gray-600 mt-2">No forms yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let formsChart, ticketsChart;
+let dailyFormsChart, dailyTicketsChart;
+
+// Color palettes
+const formColors = [
+  'rgba(59, 130, 246, 0.8)',   // blue
+  'rgba(16, 185, 129, 0.8)',   // green
+  'rgba(245, 158, 11, 0.8)',   // amber
+  'rgba(239, 68, 68, 0.8)',    // red
+  'rgba(139, 92, 246, 0.8)'    // purple
+];
+
+const ticketColors = [
+  'rgba(139, 92, 246, 0.8)',   // purple
+  'rgba(236, 72, 153, 0.8)',   // pink
+  'rgba(14, 165, 233, 0.8)',   // sky
+  'rgba(34, 197, 94, 0.8)',    // green
+  'rgba(251, 146, 60, 0.8)'    // orange
+];
+
+// Helper function to format date labels based on time range
+function formatDateLabel(dateStr, days) {
+  const date = new Date(dateStr);
+  
+  if (days === 1) {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  } else if (days <= 30) {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } else {
+    return '';
+  }
+}
+
+// Render the radial/doughnut charts (status counts)
+async function renderStatusCharts(days) {
+  const res = await fetch(`/api/admin/stats?days=${days}`);
+  const data = await res.json();
+
+  // Forms doughnut chart
+  const formLabels = data.forms.map(f => f.status.charAt(0).toUpperCase() + f.status.slice(1));
+  const formCounts = data.forms.map(f => f.count);
+
+  // Tickets doughnut chart
+  const ticketLabels = data.tickets.map(t => t.status.charAt(0).toUpperCase() + t.status.slice(1));
+  const ticketCounts = data.tickets.map(t => t.count);
+
+  if (formsChart) formsChart.destroy();
+  if (ticketsChart) ticketsChart.destroy();
+
+  const ctxForms = document.getElementById('formsChart').getContext('2d');
+  formsChart = new Chart(ctxForms, {
+    type: 'doughnut',
+    data: {
+      labels: formLabels,
+      datasets: [{
+        data: formCounts,
+        backgroundColor: formColors,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: { 
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { 
+        legend: { 
+          display: true,
+          position: 'bottom',
+          labels: {
+            padding: 10,
+            font: { size: 11 },
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const ctxTickets = document.getElementById('ticketsChart').getContext('2d');
+  ticketsChart = new Chart(ctxTickets, {
+    type: 'doughnut',
+    data: {
+      labels: ticketLabels,
+      datasets: [{
+        data: ticketCounts,
+        backgroundColor: ticketColors,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: { 
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { 
+        legend: { 
+          display: true,
+          position: 'bottom',
+          labels: {
+            padding: 10,
+            font: { size: 11 },
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Render the daily line charts
+async function renderDailyCharts(days) {
+  const res = await fetch(`/api/admin/stats?days=${days}`);
+  const data = await res.json();
+
+  // Form daily counts
+  const dailyFormLabels = data.dailyForms.map(d => formatDateLabel(d.date, days));
+  const dailyFormCounts = data.dailyForms.map(d => d.count);
+
+  // Ticket daily counts
+  const dailyTicketLabels = data.dailyTickets.map(d => formatDateLabel(d.date, days));
+  const dailyTicketCounts = data.dailyTickets.map(d => d.count);
+
+  if (dailyFormsChart) dailyFormsChart.destroy();
+  if (dailyTicketsChart) dailyTicketsChart.destroy();
+
+  // Configure point display based on time range
+  const pointRadius = days === 365 ? 3 : 4;
+
+  // Daily Forms Chart
+  const ctxDailyForms = document.getElementById('dailyFormsChart').getContext('2d');
+  dailyFormsChart = new Chart(ctxDailyForms, {
+    type: 'line',
+    data: {
+      labels: dailyFormLabels,
+      datasets: [{
+        label: 'Forms Submitted',
+        data: dailyFormCounts,
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: pointRadius,
+        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              return data.dailyForms[context[0].dataIndex].date;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { 
+          grid: { display: false },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+            autoSkip: true,
+            maxTicksLimit: days === 365 ? 12 : (days === 30 ? 15 : 10)
+          }
+        },
+        y: { 
+          beginAtZero: true, 
+          grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' },
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+
+  // Daily Tickets Chart
+  const ctxDailyTickets = document.getElementById('dailyTicketsChart').getContext('2d');
+  dailyTicketsChart = new Chart(ctxDailyTickets, {
+    type: 'line',
+    data: {
+      labels: dailyTicketLabels,
+      datasets: [{
+        label: 'Tickets Raised',
+        data: dailyTicketCounts,
+        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+        borderColor: 'rgba(139, 92, 246, 1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: pointRadius,
+        pointBackgroundColor: 'rgba(139, 92, 246, 1)',
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              return data.dailyTickets[context[0].dataIndex].date;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { 
+          grid: { display: false },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+            autoSkip: true,
+            maxTicksLimit: days === 365 ? 12 : (days === 30 ? 15 : 10)
+          }
+        },
+        y: { 
+          beginAtZero: true, 
+          grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' },
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+}
+
+// Render all charts based on selected time range
+async function renderAllCharts(days) {
+  await renderStatusCharts(days);
+  await renderDailyCharts(days);
+}
+
+// Initial render with default value (7 days)
+renderAllCharts(7);
+
+// Handle master dropdown change
+document.getElementById('masterTimeRange').addEventListener('change', (e) => {
+  const days = parseInt(e.target.value);
+  renderAllCharts(days);
+});
+
+</script>
+{% endblock %}

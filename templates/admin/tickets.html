@@ -1,0 +1,395 @@
+{% extends "admin_base.html" %}
+{% block title %}Tickets - Admin{% endblock %}
+
+{% block content %}
+<div class=" p-4">
+  <div class="bg-white p-6 rounded-lg shadow">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-semibold">Tickets</h1>
+        <p class="text-sm text-gray-500">View and update ticket statuses &amp; admin remarks.</p>
+      </div>
+
+      <!-- Controls: search + filter (desktop buttons / mobile select) -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
+        <input id="globalSearch" type="search" placeholder="Search by ID, user, subject, form id..."
+               class="px-3 py-2 border rounded w-full sm:w-80 focus:ring-2 focus:ring-indigo-300" />
+
+        <!-- Desktop filter buttons -->
+        <div class="hidden sm:flex items-center gap-2 ml-2">
+          <button data-filter="all" class="filter-btn px-3 py-2 rounded bg-indigo-600 text-white text-sm">All</button>
+          <button data-filter="open" class="filter-btn px-3 py-2 rounded bg-green-100 text-green-800 text-sm">Open</button>
+          <button data-filter="in_progress" class="filter-btn px-3 py-2 rounded bg-yellow-100 text-yellow-800 text-sm">In Progress</button>
+          <button data-filter="resolved" class="filter-btn px-3 py-2 rounded bg-gray-100 text-gray-800 text-sm">Resolved</button>
+        </div>
+
+        <!-- Mobile select filter -->
+        <select id="mobileFilter" class="sm:hidden border px-3 py-2 rounded w-full mt-2">
+          <option value="all">All</option>
+          <option value="open">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-6">
+
+      {% if tickets %}
+        <!-- Desktop table -->
+        <div class="hidden md:block overflow-x-auto rounded">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-left text-sm text-gray-600">
+                <th class="p-3 border-b">ID</th>
+                <th class="p-3 border-b">User</th>
+                <th class="p-3 border-b">Form</th>
+                <th class="p-3 border-b">Subject</th>
+                <th class="p-3 border-b">Status</th>
+                <th class="p-3 border-b">Admin Response</th>
+                <th class="p-3 border-b">Action</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTable" class="bg-white">
+              {% for t in tickets %}
+              <tr class="border-t" data-id="{{ t.id }}" data-status="{{ t.status }}"
+                  data-search="{{ t.id }} {{ t.user_name or '' }} {{ t.user_email or '' }} {{ t.subject or '' }} {{ t.form_id or '' }}"
+                  data-user="{{ t.user_name|e }}" data-email="{{ t.user_email|e }}" data-form="{{ t.form_id }}"
+                  data-subject="{{ t.subject|e }}" data-message="{{ (t.message or '')|e }}" data-admin="{{ (t.admin_response or '')|e }}"
+                  data-created="{{ t.created_at.strftime('%Y-%m-%d %H:%M:%S') if t.created_at else '' }}">
+                <td class="p-3 align-top">{{ t.id }}</td>
+                <td class="p-3 align-top">
+                  <div class="font-medium">{{ t.user_name }}</div>
+                  <div class="text-xs text-gray-400">{{ t.user_email }}</div>
+                </td>
+                <td class="p-3 align-top">{{ t.form_id }}</td>
+                <td class="p-3 align-top">{{ t.subject }}</td>
+                <td class="p-3 align-top">
+                  {% if t.status == 'open' %}
+                    <span class="inline-block px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">Open</span>
+                  {% elif t.status == 'in_progress' %}
+                    <span class="inline-block px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">In Progress</span>
+                  {% else %}
+                    <span class="inline-block px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">Resolved</span>
+                  {% endif %}
+                </td>
+                <td class="p-3 align-top max-w-xs break-words">
+                  <div class="text-sm text-gray-700">{{ t.admin_response or '-' }}</div>
+                </td>
+                <td class="p-3 align-top">
+                  <div class="flex gap-2 items-start">
+                    <!-- VIEW (opens modal) -->
+                    <button class="view-btn text-indigo-600 hover:underline text-sm px-2 py-1" type="button"
+                            aria-controls="ticketModal" aria-haspopup="dialog">
+                      View
+                    </button>
+
+                    <!-- inline update form -->
+                    <form method="post" action="{{ url_for('admin_tickets') }}" class="flex flex-col gap-2">
+                      <input type="hidden" name="ticket_id" value="{{ t.id }}">
+                      <select name="status" class="border px-2 py-1 rounded text-sm">
+                        <option value="open" {% if t.status=='open' %}selected{% endif %}>Open</option>
+                        <option value="in_progress" {% if t.status=='in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="resolved" {% if t.status=='resolved' %}selected{% endif %}>Resolved</option>
+                      </select>
+                      <input name="admin_response" placeholder="Add a remark (optional)"
+                             value="{{ t.admin_response or '' }}" class="border px-2 py-1 rounded text-sm" />
+                      <button type="submit" class="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm">Update</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile cards -->
+        <div class="md:hidden space-y-3" id="ticketsCards">
+          {% for t in tickets %}
+          <div class="border rounded p-3" data-id="{{ t.id }}" data-status="{{ t.status }}"
+               data-search="{{ t.id }} {{ t.user_name or '' }} {{ t.user_email or '' }} {{ t.subject or '' }} {{ t.form_id or '' }}"
+               data-user="{{ t.user_name|e }}" data-email="{{ t.user_email|e }}" data-form="{{ t.form_id }}"
+               data-subject="{{ t.subject|e }}" data-message="{{ (t.message or '')|e }}" data-admin="{{ (t.admin_response or '')|e }}"
+               data-created="{{ t.created_at.strftime('%Y-%m-%d %H:%M:%S') if t.created_at else '' }}">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="text-sm font-medium">#{{ t.id }} — {{ t.subject }}</div>
+                <div class="text-xs text-gray-500">{{ t.user_name }} · {{ t.user_email }}</div>
+                <div class="text-xs text-gray-400 mt-1">Form: {{ t.form_id }}</div>
+              </div>
+              <div class="text-right">
+                {% if t.status == 'open' %}
+                  <span class="inline-block px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">Open</span>
+                {% elif t.status == 'in_progress' %}
+                  <span class="inline-block px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">In Progress</span>
+                {% else %}
+                  <span class="inline-block px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">Resolved</span>
+                {% endif %}
+                <div class="text-xs text-gray-500 mt-2">{{ t.created_at.strftime('%Y-%m-%d') if t.created_at else '' }}</div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <div class="text-sm text-gray-700">Admin remark:</div>
+              <div class="text-sm text-gray-600 break-words">{{ t.admin_response or '-' }}</div>
+            </div>
+
+            <div class="mt-3 flex gap-2">
+              <button class="view-btn flex-1 bg-white border px-3 py-2 rounded text-indigo-600 text-sm">View</button>
+
+              <form method="post" action="{{ url_for('admin_tickets') }}" class="flex-1">
+                <input type="hidden" name="ticket_id" value="{{ t.id }}">
+                <div class="flex gap-2">
+                  <select name="status" class="border px-2 py-1 rounded text-sm w-1/2">
+                    <option value="open" {% if t.status=='open' %}selected{% endif %}>Open</option>
+                    <option value="in_progress" {% if t.status=='in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="resolved" {% if t.status=='resolved' %}selected{% endif %}>Resolved</option>
+                  </select>
+                  <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm w-1/2">Update</button>
+                </div>
+                <input name="admin_response" placeholder="Remark (optional)" value="{{ t.admin_response or '' }}" class="mt-2 border px-2 py-1 rounded text-sm w-full" />
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <p class="text-gray-600">No tickets submitted yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Ticket Detail Modal -->
+<div id="ticketModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+  <div role="dialog" aria-modal="true" aria-labelledby="ticketModalTitle" class="bg-white rounded-lg shadow-lg max-w-3xl w-full overflow-auto">
+    <div class="flex items-center justify-between p-4 border-b">
+      <h3 id="ticketModalTitle" class="text-lg font-semibold">Ticket <span id="modalTicketId"></span></h3>
+      <div class="flex items-center gap-2">
+        <button id="modalClose" class="text-gray-500 hover:text-gray-700" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="p-4 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div class="text-xs text-gray-500">User</div>
+          <div id="modalUser" class="font-medium"></div>
+          <div id="modalEmail" class="text-xs text-gray-400"></div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500">Form ID</div>
+          <div id="modalForm" class="font-medium"></div>
+          <div class="text-xs text-gray-400" id="modalCreated"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-xs text-gray-500">Subject</div>
+        <div id="modalSubject" class="font-medium"></div>
+      </div>
+
+      <div>
+        <div class="text-xs text-gray-500">Message</div>
+        <div id="modalMessage" class="text-sm text-gray-700 whitespace-pre-wrap"></div>
+      </div>
+
+      <div>
+        <div class="text-xs text-gray-500">Admin Response</div>
+        <div id="modalAdmin" class="text-sm text-gray-700 whitespace-pre-wrap"></div>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button id="modalEditBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm">Edit (open form)</button>
+        <button id="modalCloseFooter" class="border px-4 py-2 rounded text-sm">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Client-side filtering, search, modal & responsive behavior -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // elements
+  const filterBtns = Array.from(document.querySelectorAll('.filter-btn'));
+  const tableRows = Array.from(document.querySelectorAll('#ticketsTable tr'));
+  const cardRows = Array.from(document.querySelectorAll('#ticketsCards [data-status]'));
+  const searchInput = document.getElementById('globalSearch');
+  const mobileFilter = document.getElementById('mobileFilter');
+
+  // modal elements
+  const modal = document.getElementById('ticketModal');
+  const modalTicketId = document.getElementById('modalTicketId');
+  const modalUser = document.getElementById('modalUser');
+  const modalEmail = document.getElementById('modalEmail');
+  const modalForm = document.getElementById('modalForm');
+  const modalSubject = document.getElementById('modalSubject');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalAdmin = document.getElementById('modalAdmin');
+  const modalCreated = document.getElementById('modalCreated');
+  const modalClose = document.getElementById('modalClose');
+  const modalCloseFooter = document.getElementById('modalCloseFooter');
+  const modalEditBtn = document.getElementById('modalEditBtn');
+
+  // defensive checks
+  function exists(el) { return !!el; }
+
+  // helpers
+  function setFilter(status) {
+    // update active button styling
+    filterBtns.forEach(b => {
+      if (b.getAttribute('data-filter') === status) {
+        b.classList.add('ring-2','ring-indigo-300');
+      } else {
+        b.classList.remove('ring-2','ring-indigo-300');
+      }
+    });
+
+    const shouldShow = (el) => (status === 'all' || el.dataset.status === status);
+
+    tableRows.forEach(r => r.style.display = shouldShow(r) ? '' : 'none');
+    cardRows.forEach(c => c.style.display = shouldShow(c) ? '' : 'none');
+
+    applySearch(); // keep search synced
+  }
+
+  function setFilterNoSearch(status) {
+    filterBtns.forEach(b => {
+      if (b.getAttribute('data-filter') === status) {
+        b.classList.add('ring-2','ring-indigo-300');
+      } else {
+        b.classList.remove('ring-2','ring-indigo-300');
+      }
+    });
+    const shouldShow = (el) => (status === 'all' || el.dataset.status === status);
+    tableRows.forEach(r => r.style.display = shouldShow(r) ? '' : 'none');
+    cardRows.forEach(c => c.style.display = shouldShow(c) ? '' : 'none');
+  }
+
+  function applySearch() {
+    const q = (searchInput && searchInput.value || '').trim().toLowerCase();
+    // if empty, reapply status-only visibility
+    if (!q) {
+      const active = document.querySelector('.filter-btn.ring-2')?.getAttribute('data-filter') || 'all';
+      setFilterNoSearch(active);
+      return;
+    }
+
+    tableRows.forEach(r => {
+      const visibleByStatus = (r.style.display !== 'none');
+      if (!visibleByStatus) return;
+      const hay = (r.dataset.search || '').toLowerCase();
+      r.style.display = hay.includes(q) ? '' : 'none';
+    });
+
+    cardRows.forEach(c => {
+      const visibleByStatus = (c.style.display !== 'none');
+      if (!visibleByStatus) return;
+      const hay = (c.dataset.search || '').toLowerCase();
+      c.style.display = hay.includes(q) ? '' : 'none';
+    });
+  }
+
+  // filter button events
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const status = btn.getAttribute('data-filter');
+      if (mobileFilter) mobileFilter.value = status;
+      setFilter(status);
+    });
+  });
+
+  // mobile select filter
+  if (mobileFilter) {
+    mobileFilter.addEventListener('change', () => {
+      setFilterNoSearch(mobileFilter.value);
+    });
+  }
+
+  // default = all
+  setFilterNoSearch('all');
+
+  // search debounce
+  let debounce;
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(applySearch, 200);
+    });
+  }
+
+  // VIEW modal handling - attach to all view buttons
+  function openModalFromElement(el) {
+    const row = el.closest('[data-id]');
+    if (!row) return;
+    modalTicketId.textContent = row.dataset.id || '';
+    modalUser.textContent = row.dataset.user || '';
+    modalEmail.textContent = row.dataset.email || '';
+    modalForm.textContent = row.dataset.form || '';
+    modalSubject.textContent = row.dataset.subject || '';
+    modalMessage.textContent = row.dataset.message || '-';
+    modalAdmin.textContent = row.dataset.admin || '-';
+    modalCreated.textContent = row.dataset.created || '';
+    // show modal
+    if (modal) {
+      modal.classList.remove('hidden');
+      // focus close button if present
+      const closeBtn = modal.querySelector('[aria-label="Close"]');
+      if (closeBtn) closeBtn.focus();
+      document.documentElement.style.overflow = 'hidden'; // prevent background scroll
+    }
+  }
+
+  function bindViewButtons(scope=document) {
+    const viewButtons = Array.from(scope.querySelectorAll('.view-btn'));
+    viewButtons.forEach(btn => {
+      btn.removeEventListener('click', onViewClick);
+      btn.addEventListener('click', onViewClick);
+    });
+  }
+
+  function onViewClick(e) {
+    e.preventDefault();
+    openModalFromElement(e.currentTarget);
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.documentElement.style.overflow = '';
+  }
+
+  if (modalClose) modalClose.addEventListener('click', closeModal);
+  if (modalCloseFooter) modalCloseFooter.addEventListener('click', closeModal);
+
+  // close on ESC
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+      closeModal();
+    }
+  });
+
+  // "Edit" button inside modal - scroll to the table row and highlight it
+  if (modalEditBtn) {
+    modalEditBtn.addEventListener('click', () => {
+      const id = modalTicketId.textContent;
+      closeModal();
+      const targetRow = document.querySelector(`[data-id="${id}"]`);
+      if (targetRow) {
+        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetRow.classList.add('ring-2', 'ring-indigo-300');
+        setTimeout(() => targetRow.classList.remove('ring-2', 'ring-indigo-300'), 2000);
+      }
+    });
+  }
+
+  // initial binding
+  bindViewButtons();
+
+});
+</script>
+{% endblock %}

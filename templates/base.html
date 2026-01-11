@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Demograph{% endblock %}</title>
+
+  <!-- Poppins Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    body { font-family: 'Poppins', system-ui, sans-serif; }
+
+    .glass {
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    .glass-dark {
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .sidebar-scroll {
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-sky-100 text-slate-800">
+
+<!-- TOP NAVBAR -->
+<header class="sticky top-0 z-50">
+  <div class="glass shadow-sm">
+    <div class=" px-6">
+      <div class="flex items-center justify-between h-16">
+
+        <div class="flex items-center gap-4">
+          <button id="sidebarToggle" class="md:hidden text-slate-700">
+            <i class="fas fa-bars text-lg"></i>
+          </button>
+
+          <a href="{{ url_for('user_dashboard') }}" class="font-semibold text-lg tracking-tight">
+            Demograph
+          </a>
+        </div>
+
+        <div class="flex items-center gap-4">
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('user_dashboard') }}" class="hidden md:block text-sm hover:text-indigo-600">Dashboard</a>
+
+            {% if current_user.role == 'admin' %}
+              <a href="{{ url_for('admin_dashboard') }}" class="hidden md:block text-sm hover:text-indigo-600">Admin</a>
+            {% endif %}
+
+            <div class="flex items-center gap-3">
+              <a href="{{ url_for('profile') }}">
+                {% if current_user.profile_photo %}
+                  <img src="{{ url_for('uploaded_file', filename=current_user.profile_photo) }}" class="w-9 h-9 rounded-full object-cover ring-2 ring-white">
+                {% else %}
+                  <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-medium">U</div>
+                {% endif %}
+              </a>
+              <a href="{{ url_for('logout') }}" class="text-sm text-red-500 hover:underline">Logout</a>
+            </div>
+          {% else %}
+            <a href="{{ url_for('login') }}" class="text-sm">Login</a>
+            <a href="{{ url_for('register') }}" class="text-sm">Register</a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="px-6 py-6 flex gap-6">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar"
+         class="w-72 glass-dark rounded-2xl shadow-lg sidebar-scroll
+                transform md:translate-x-0 -translate-x-full md:static fixed top-20 left-6 z-40 transition">
+
+    <!-- PROFILE -->
+    <div class="p-5 border-b border-white/40">
+      {% if current_user.is_authenticated %}
+        <div class="flex items-center gap-3">
+          {% if current_user.profile_photo %}
+            <img src="{{ url_for('uploaded_file', filename=current_user.profile_photo) }}" class="w-12 h-12 rounded-full object-cover">
+          {% else %}
+            <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">U</div>
+          {% endif %}
+          <div>
+            <div class="font-medium">{{ current_user.name }}</div>
+            <div class="text-xs text-slate-500">{{ current_user.email }}</div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- NAV -->
+    <nav class="p-4 space-y-1">
+      <a href="{{ url_for('user_dashboard') }}"
+         class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm
+                {% if request.endpoint=='user_dashboard' %}
+                  bg-indigo-100 text-indigo-700 font-medium
+                {% else %}
+                  hover:bg-white/60
+                {% endif %}">
+        <i class="fas fa-home w-4"></i> Overview
+      </a>
+
+      <a href="{{ url_for('user_form') }}"
+         class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm
+                {% if request.endpoint=='user_form' %}
+                  bg-indigo-100 text-indigo-700 font-medium
+                {% else %}
+                  hover:bg-white/60
+                {% endif %}">
+        <i class="fas fa-file-alt w-4"></i> Form
+      </a>
+
+      <a href="{{ url_for('user_tickets') }}"
+         class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm
+                {% if request.endpoint=='user_tickets' %}
+                  bg-indigo-100 text-indigo-700 font-medium
+                {% else %}
+                  hover:bg-white/60
+                {% endif %}">
+        <i class="fas fa-ticket-alt w-4"></i> Tickets
+      </a>
+
+      {% if current_user.role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}"
+           class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm
+                  {% if request.endpoint=='admin_dashboard' %}
+                    bg-indigo-100 text-indigo-700 font-medium
+                  {% else %}
+                    hover:bg-white/60
+                  {% endif %}">
+          <i class="fas fa-cog w-4"></i> Admin
+        </a>
+      {% endif %}
+    </nav>
+
+    <div class="p-4 border-t border-white/40">
+      <a href="{{ url_for('profile') }}" class="text-sm text-indigo-600 hover:underline">Edit profile</a>
+      <a href="{{ url_for('logout') }}" class="block mt-2 text-sm text-red-500 hover:underline">Logout</a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 min-h-[60vh]">
+
+    <!-- FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-3 mb-4">
+          {% for category, message in messages %}
+            <div class="px-4 py-3 rounded-xl text-sm shadow-sm
+              {{ 'bg-emerald-100 text-emerald-800' if category=='success'
+                 else 'bg-red-100 text-red-800' if category=='danger'
+                 else 'bg-blue-100 text-blue-800' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<!-- SIDEBAR TOGGLE -->
+<script>
+  const toggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('sidebar');
+
+  if (toggle && sidebar) {
+    toggle.addEventListener('click', e => {
+      e.stopPropagation();
+      sidebar.classList.toggle('-translate-x-full');
+    });
+
+    document.addEventListener('click', e => {
+      if (window.innerWidth < 768 && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+        sidebar.classList.add('-translate-x-full');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

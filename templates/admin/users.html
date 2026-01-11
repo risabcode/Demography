@@ -1,0 +1,166 @@
+{% extends "admin_base.html" %}
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded shadow p-4">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+    <h2 class="text-xl font-bold">Manage Users</h2>
+
+    <input
+      id="searchInput"
+      type="search"
+      placeholder="Search name, email, role..."
+      class="border px-3 py-2 rounded w-full md:w-72 focus:ring-2 focus:ring-indigo-300"
+    />
+  </div>
+
+  <!-- Desktop Table -->
+  <div class="hidden md:block overflow-x-auto">
+    <table class="w-full text-sm border" id="usersTable">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-3 border">Photo</th>
+          <th class="p-3 border cursor-pointer sort" data-key="name">Name ⬍</th>
+          <th class="p-3 border cursor-pointer sort" data-key="email">Email ⬍</th>
+          <th class="p-3 border cursor-pointer sort" data-key="role">Role ⬍</th>
+          <th class="p-3 border cursor-pointer sort" data-key="created">Created ⬍</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        {% for u in users %}
+        <tr class="border-t"
+            data-name="{{ u.name|lower }}"
+            data-email="{{ u.email|lower }}"
+            data-role="{{ u.role|lower }}"
+            data-created="{{ u.created_at }}">
+          <td class="p-3">
+            {% if u.profile_photo %}
+              <img src="{{ url_for('uploaded_file', filename=u.profile_photo) }}"
+                   class="w-10 h-10 rounded-full object-cover">
+            {% else %}
+              <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+            {% endif %}
+          </td>
+          <td class="p-3 font-medium">{{ u.name }}</td>
+          <td class="p-3">{{ u.email }}</td>
+          <td class="p-3 capitalize font-semibold">{{ u.role }}</td>
+          <td class="p-3 text-xs text-gray-500">{{ u.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile Cards -->
+  <div class="md:hidden space-y-3" id="cards">
+    {% for u in users %}
+    <div class="border rounded p-3"
+         data-name="{{ u.name|lower }}"
+         data-email="{{ u.email|lower }}"
+         data-role="{{ u.role|lower }}"
+         data-created="{{ u.created_at }}">
+      <div class="flex items-center gap-3">
+        {% if u.profile_photo %}
+          <img src="{{ url_for('uploaded_file', filename=u.profile_photo) }}"
+               class="w-10 h-10 rounded-full object-cover">
+        {% else %}
+          <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+        {% endif %}
+        <div>
+          <div class="font-medium">{{ u.name }}</div>
+          <div class="text-xs text-gray-500">{{ u.email }}</div>
+        </div>
+      </div>
+      <div class="mt-2 text-sm">
+        <span class="capitalize font-semibold">{{ u.role }}</span>
+        <span class="text-xs text-gray-400 block">{{ u.created_at }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-between items-center mt-4">
+    <span class="text-sm text-gray-500" id="pageInfo"></span>
+    <div class="flex gap-2">
+      <button id="prevBtn" class="px-3 py-1 border rounded text-sm">Prev</button>
+      <button id="nextBtn" class="px-3 py-1 border rounded text-sm">Next</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const rows = Array.from(document.querySelectorAll('#tableBody tr'));
+  const cards = Array.from(document.querySelectorAll('#cards > div'));
+  const searchInput = document.getElementById('searchInput');
+  const pageInfo = document.getElementById('pageInfo');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const sortBtns = document.querySelectorAll('.sort');
+
+  let currentPage = 1;
+  const perPage = 5;
+  let filtered = [...rows];
+  let sortKey = null;
+  let sortAsc = true;
+
+  function applySearch() {
+    const q = searchInput.value.toLowerCase();
+    filtered = rows.filter(r =>
+      r.dataset.name.includes(q) ||
+      r.dataset.email.includes(q) ||
+      r.dataset.role.includes(q)
+    );
+    currentPage = 1;
+    render();
+  }
+
+  function applySort(key) {
+    sortAsc = sortKey === key ? !sortAsc : true;
+    sortKey = key;
+
+    filtered.sort((a, b) => {
+      const A = a.dataset[key] || '';
+      const B = b.dataset[key] || '';
+      return sortAsc ? A.localeCompare(B) : B.localeCompare(A);
+    });
+    render();
+  }
+
+  function render() {
+    rows.forEach(r => r.style.display = 'none');
+    cards.forEach(c => c.style.display = 'none');
+
+    const start = (currentPage - 1) * perPage;
+    const pageItems = filtered.slice(start, start + perPage);
+
+    pageItems.forEach(r => r.style.display = '');
+    pageItems.forEach(r => {
+      const idx = rows.indexOf(r);
+      if (cards[idx]) cards[idx].style.display = '';
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+  }
+
+  searchInput.addEventListener('input', applySearch);
+
+  sortBtns.forEach(btn => {
+    btn.addEventListener('click', () => applySort(btn.dataset.key));
+  });
+
+  prevBtn.onclick = () => { currentPage--; render(); };
+  nextBtn.onclick = () => { currentPage++; render(); };
+
+  render();
+})();
+</script>
+{% endblock %}

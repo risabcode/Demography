@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 gap-6">
+
+  <!-- FORMS SECTION -->
+  <div class="bg-white p-6 rounded shadow">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg">Your Forms</h3>
+      <a href="{{ url_for('user_form') }}" class="inline-block bg-green-600 text-white py-1 px-3 rounded hover:bg-green-700">Add New Form</a>
+    </div>
+
+    {% if forms %}
+      <div class="overflow-x-auto">
+        <table id="formsTable" class="min-w-full divide-y divide-gray-200 table-auto">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Full Name</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Admin Remark</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Submitted At</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            {% for f in forms %}
+              <tr>
+                <td class="px-4 py-2 text-sm">{{ f.id }}</td>
+                <td class="px-4 py-2 text-sm">{{ f.full_name }}</td>
+                <td class="px-4 py-2 text-sm">
+                  <span class="capitalize font-semibold
+                    {% if f.status == 'approved' %} text-green-600
+                    {% elif f.status == 'rejected' %} text-red-600
+                    {% else %} text-yellow-600 {% endif %}">
+                    {{ f.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-2 text-sm text-gray-700">{{ f.admin_remark or '-' }}</td>
+                <td class="px-4 py-2 text-sm">{{ f.created_at }}</td>
+                <td class="px-4 py-2 text-sm flex space-x-3">
+                  <!-- Edit Icon -->
+                  <a href="{{ url_for('user_form', form_id=f.id) }}" title="Edit">
+                    <i class="fas fa-edit text-blue-600 hover:text-blue-800"></i>
+                  </a>
+                  <!-- Delete Icon -->
+                  <a href="{{ url_for('delete_form', form_id=f.id) }}" title="Delete" onclick="return confirm('Are you sure you want to delete this form?');">
+                    <i class="fas fa-trash-alt text-red-600 hover:text-red-800"></i>
+                  </a>
+                  <!-- Raise Ticket Icon -->
+                  <a href="{{ url_for('user_tickets') }}#select-form-{{ f.id }}" title="Raise Ticket">
+                    <i class="fas fa-plus-circle text-indigo-600 hover:text-indigo-800"></i>
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-gray-600">No forms submitted yet. Please fill a form.</p>
+      <a href="{{ url_for('user_form') }}" class="mt-2 inline-block bg-green-600 text-white py-1 px-3 rounded hover:bg-green-700">Fill Form</a>
+    {% endif %}
+  </div>
+
+  <!-- TICKETS SECTION -->
+  <div class="bg-white p-6 rounded shadow">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg">Your Tickets</h3>
+      {% if forms and forms|length > 0 %}
+        <a href="{{ url_for('user_tickets') }}" class="inline-block bg-indigo-600 text-white py-1 px-3 rounded hover:bg-indigo-700">Raise Ticket</a>
+      {% else %}
+        <a href="{{ url_for('user_form') }}" class="inline-block bg-gray-300 text-gray-700 py-1 px-3 rounded cursor-not-allowed" title="Submit a form first">Raise Ticket</a>
+      {% endif %}
+    </div>
+
+    {% if tickets %}
+      <div class="overflow-x-auto">
+        <table id="ticketsTable" class="min-w-full divide-y divide-gray-200 table-auto">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Subject</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Form</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Admin Response</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Created At</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            {% for t in tickets %}
+              <tr>
+                <td class="px-4 py-2 text-sm">{{ t.id }}</td>
+                <td class="px-4 py-2 text-sm">{{ t.subject }}</td>
+                <td class="px-4 py-2 text-sm capitalize">{{ t.status }}</td>
+                <td class="px-4 py-2 text-sm">
+                  {% if t.form_full_name %}
+                    {{ t.form_full_name }} (ID: {{ t.form_id }})
+                  {% else %}
+                    Form #{{ t.form_id }}
+                  {% endif %}
+                </td>
+                <td class="px-4 py-2 text-sm text-gray-700">
+                  {{ (t.admin_response[:60] ~ '...') if t.admin_response and t.admin_response|length > 60 else (t.admin_response or '-') }}
+                </td>
+                <td class="px-4 py-2 text-sm">{{ t.created_at }}</td>
+                <td class="px-4 py-2 text-sm flex space-x-3">
+                  <!-- View Icon -->
+                  <a href="{{ url_for('view_ticket', ticket_id=t.id) }}" title="View">
+                    <i class="fas fa-eye text-blue-600 hover:text-blue-800"></i>
+                  </a>
+                  <!-- Delete Icon -->
+                  <a href="{{ url_for('delete_ticket', ticket_id=t.id) }}" title="Delete" onclick="return confirm('Are you sure you want to delete this ticket?');">
+                    <i class="fas fa-trash-alt text-red-600 hover:text-red-800"></i>
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-gray-600">No tickets submitted yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- DataTables CSS/JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $('#formsTable').DataTable({
+      "pageLength": 5,
+      "lengthMenu": [5, 10, 25],
+      "order": [[0, "desc"]]
+    });
+    $('#ticketsTable').DataTable({
+      "pageLength": 5,
+      "lengthMenu": [5, 10, 25],
+      "order": [[0, "desc"]]
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Admin · Demograph{% endblock %}</title>
+
+  <!-- Poppins Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    body { font-family: 'Poppins', system-ui, sans-serif; }
+
+    .glass {
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    .glass-strong {
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      border: 1px solid rgba(255,255,255,0.45);
+    }
+
+    .sidebar-scroll {
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-sky-100 text-slate-800">
+
+<!-- TOP NAVBAR -->
+<header class="sticky top-0 z-50">
+  <div class="glass shadow-sm">
+    <div class=" px-6">
+      <div class="flex items-center justify-between h-16">
+
+        <div class="flex items-center gap-4">
+          <button id="sidebarToggle" class="md:hidden text-slate-700">
+            <i class="fas fa-bars text-lg"></i>
+          </button>
+          <a href="{{ url_for('admin_dashboard') }}" class="font-semibold text-lg tracking-tight">
+            Demograph <span class="text-indigo-600">Admin</span>
+          </a>
+        </div>
+
+        <div class="flex items-center gap-4 text-sm">
+          <span class="hidden sm:block text-slate-600">
+            {{ current_user.email }}
+          </span>
+          <a href="{{ url_for('logout') }}" class="text-red-500 hover:underline">
+            Logout
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class=" px-6 py-6 flex gap-6">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar"
+    class="w-72 glass-strong rounded-2xl shadow-lg sidebar-scroll
+           transform md:translate-x-0 -translate-x-full
+           md:static fixed top-20 left-6 z-40 transition">
+
+    <nav class="p-4 space-y-1 text-sm">
+
+      <a href="{{ url_for('admin_dashboard') }}"
+         class="flex items-center gap-3 px-4 py-2 rounded-lg
+                {% if request.endpoint=='admin_dashboard' %}
+                  bg-indigo-100 text-indigo-700 font-medium
+                {% else %}
+                  hover:bg-white/70
+                {% endif %}">
+        <i class="fas fa-chart-line w-4"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="{{ url_for('admin_users') }}"
+         class="flex items-center gap-3 px-4 py-2 rounded-lg
+                {% if request.endpoint=='admin_users' %}
+                  bg-indigo-100 text-indigo-700 font-medium
+                {% else %}
+                  hover:bg-white/70
+                {% endif %}">
+        <i class="fas fa-users w-4"></i>
+        <span>Users</span>
+      </a>
+
+      <a href="{{ url_for('admin_forms') }}"
+         class="flex items-center gap-3 px-4 py-2 rounded-lg
+                {% if request.endpoint=='admin_forms' %}
+                  bg-indigo-100 text-indigo-700 font-medium
+                {% else %}
+                  hover:bg-white/70
+                {% endif %}">
+        <i class="fas fa-file-alt w-4"></i>
+        <span>Forms</span>
+      </a>
+
+      <a href="{{ url_for('admin_tickets') }}"
+         class="flex items-center gap-3 px-4 py-2 rounded-lg
+                {% if request.endpoint=='admin_tickets' %}
+                  bg-indigo-100 text-indigo-700 font-medium
+                {% else %}
+                  hover:bg-white/70
+                {% endif %}">
+        <i class="fas fa-ticket-alt w-4"></i>
+        <span>Tickets</span>
+      </a>
+
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 min-h-[60vh]">
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-3 mb-4">
+          {% for category, message in messages %}
+            <div class="px-4 py-3 rounded-xl text-sm shadow-sm
+              {{ 'bg-emerald-100 text-emerald-800' if category=='success'
+                 else 'bg-red-100 text-red-800' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+<!-- SIDEBAR TOGGLE -->
+<script>
+(function(){
+  const t = document.getElementById('sidebarToggle');
+  const s = document.getElementById('sidebar');
+  if (!t || !s) return;
+
+  t.addEventListener('click', e => {
+    e.stopPropagation();
+    s.classList.toggle('-translate-x-full');
+  });
+
+  document.addEventListener('click', e => {
+    if (window.innerWidth < 768 && !s.contains(e.target) && !t.contains(e.target)) {
+      s.classList.add('-translate-x-full');
+    }
+  });
+})();
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

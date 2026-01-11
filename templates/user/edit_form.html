@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Edit Form{% endblock %}
+
+{% block content %}
+<div class=" bg-white p-6 rounded shadow">
+
+  <!-- Back to Dashboard Button -->
+  <div class="mb-4">
+    <a href="{{ url_for('user_dashboard') }}" class="inline-flex items-center bg-gray-300 text-gray-800 py-1 px-3 rounded hover:bg-gray-400">
+      <!-- Arrow Left Icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to Dashboard
+    </a>
+  </div>
+
+  <h2 class="text-xl mb-4">Edit Your Form</h2>
+  <form method="post">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label>Full Name
+        <input name="full_name" class="w-full border px-3 py-2 rounded" value="{{ form.full_name if form else '' }}">
+      </label>
+      <label>Phone
+        <input name="phone" class="w-full border px-3 py-2 rounded" value="{{ form.phone if form else '' }}">
+      </label>
+      <label>Age
+        <input name="age" class="w-full border px-3 py-2 rounded" value="{{ form.age if form else '' }}">
+      </label>
+      <label>Gender
+        <select name="gender" class="w-full border px-3 py-2 rounded">
+          <option value="">Select</option>
+          <option value="male" {% if form and form.gender=='male' %}selected{% endif %}>Male</option>
+          <option value="female" {% if form and form.gender=='female' %}selected{% endif %}>Female</option>
+          <option value="other" {% if form and form.gender=='other' %}selected{% endif %}>Other</option>
+        </select>
+      </label>
+      <label>Aadhaar
+        <input name="aadhar_number" class="w-full border px-3 py-2 rounded" value="{{ form.aadhar_number if form else '' }}">
+      </label>
+      <label>PAN
+        <input name="pan_number" class="w-full border px-3 py-2 rounded" value="{{ form.pan_number if form else '' }}">
+      </label>
+      <label>Qualification
+        <input name="qualification" class="w-full border px-3 py-2 rounded" value="{{ form.qualification if form else '' }}">
+      </label>
+      <label>Father Name
+        <input name="father_name" class="w-full border px-3 py-2 rounded" value="{{ form.father_name if form else '' }}">
+      </label>
+      <label>Address
+        <input name="address" class="w-full border px-3 py-2 rounded" value="{{ form.address if form else '' }}">
+      </label>
+      <label>City
+        <input name="city" class="w-full border px-3 py-2 rounded" value="{{ form.city if form else '' }}">
+      </label>
+      <label>State
+        <input name="state" class="w-full border px-3 py-2 rounded" value="{{ form.state if form else '' }}">
+      </label>
+      <label>Pincode
+        <input name="pincode" class="w-full border px-3 py-2 rounded" value="{{ form.pincode if form else '' }}">
+      </label>
+    </div>
+
+    <div class="mt-4">
+      <button class="bg-blue-600 text-white py-2 px-4 rounded">Update Form</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

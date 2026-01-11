@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Tickets{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow w-full max-w-5xl mx-auto">
+  <h2 class="text-xl mb-4 font-semibold">Raise Ticket</h2>
+
+  {% if not forms %}
+    <p class="text-red-600 mb-4">
+      You must submit a form before raising a ticket.
+    </p>
+    <a href="{{ url_for('user_form') }}" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+      Submit Form
+    </a>
+  {% else %}
+    <form method="post" class="space-y-3 mb-6">
+      <label class="block">
+        Choose Form
+        <select name="form_id" required class="w-full border px-3 py-2 rounded">
+          {% for f in forms %}
+            <option value="{{ f.id }}">
+              {{ f.full_name or 'Form #' ~ f.id }} - {{ f.created_at.strftime('%Y-%m-%d') }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="block">
+        Subject
+        <input name="subject" required class="w-full border px-3 py-2 rounded" />
+      </label>
+
+      <label class="block">
+        Message
+        <textarea name="message" required class="w-full border px-3 py-2 rounded"></textarea>
+      </label>
+
+      <button class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">Submit Ticket</button>
+    </form>
+  {% endif %}
+
+  <h3 class="mt-6 text-lg font-semibold mb-2">Your Raised Tickets</h3>
+
+  {% if tickets %}
+    <div class="overflow-x-auto">
+      <table id="ticketsTable" class="min-w-full divide-y divide-gray-200 table-auto">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Subject</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Form</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Admin Response</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Created At</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for t in tickets %}
+            <tr>
+              <td class="px-4 py-2 text-sm">{{ t.id }}</td>
+              <td class="px-4 py-2 text-sm">{{ t.subject }}</td>
+              <td class="px-4 py-2 text-sm capitalize">{{ t.status }}</td>
+              <td class="px-4 py-2 text-sm">
+                {% set associated_form = None %}
+                {% for f in forms %}
+                  {% if f.id == t.form_id %}
+                    {% set associated_form = f %}
+                  {% endif %}
+                {% endfor %}
+                {% if associated_form %}
+                  {{ associated_form.full_name or 'Form #' ~ associated_form.id }} - {{ associated_form.created_at.strftime('%Y-%m-%d') }}
+                {% else %}
+                  Unknown Form
+                {% endif %}
+              </td>
+              <td class="px-4 py-2 text-sm text-gray-700">
+                {{ (t.admin_response[:60] ~ '...') if t.admin_response and t.admin_response|length > 60 else (t.admin_response or '-') }}
+              </td>
+              <td class="px-4 py-2 text-sm">{{ t.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-gray-600">No tickets yet.</p>
+  {% endif %}
+</div>
+
+<!-- DataTables CSS/JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $('#ticketsTable').DataTable({
+      "pageLength": 5,
+      "lengthMenu": [5, 10, 25],
+      "order": [[0, "desc"]]
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "admin_base.html" %}
+{% block title %}Admin Forms{% endblock %}
+
+{% macro table(title, forms, badge_class) %}
+<div class="bg-white rounded-lg shadow p-4 mb-8">
+
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="font-bold text-lg">{{ title }}</h3>
+    <span class="text-xs px-2 py-1 rounded {{ badge_class }}">
+      {{ forms|length }} total
+    </span>
+  </div>
+
+  {% if forms %}
+  <!-- Desktop table -->
+  <div class="hidden md:block overflow-x-auto">
+    <table class="w-full text-sm border border-gray-200 border-collapse">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="p-2 border">ID</th>
+          <th class="p-2 border">User</th>
+          <th class="p-2 border">Email</th>
+          <th class="p-2 border">Status</th>
+          <th class="p-2 border">Created</th>
+          <th class="p-2 border">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in forms %}
+        <tr class="hover:bg-gray-50">
+          <td class="p-2 border">{{ f.id }}</td>
+          <td class="p-2 border">{{ f.user_name }}</td>
+          <td class="p-2 border text-xs text-gray-600">{{ f.user_email }}</td>
+          <td class="p-2 border capitalize font-semibold">{{ f.status }}</td>
+          <td class="p-2 border text-xs">
+            {{ f.created_at.strftime('%Y-%m-%d') if f.created_at else '-' }}
+          </td>
+          <td class="p-2 border">
+            <a href="{{ url_for('admin_form_detail', form_id=f.id) }}"
+               class="text-indigo-600 hover:underline font-medium">
+              View
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile cards -->
+  <div class="md:hidden space-y-3">
+    {% for f in forms %}
+    <div class="border rounded p-3">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="font-medium text-sm">Form #{{ f.id }}</div>
+          <div class="text-xs text-gray-500">{{ f.user_name }}</div>
+          <div class="text-xs text-gray-400">{{ f.user_email }}</div>
+        </div>
+        <span class="text-xs px-2 py-1 rounded {{ badge_class }}">
+          {{ f.status }}
+        </span>
+      </div>
+
+      <div class="mt-2 text-xs text-gray-500">
+        Created: {{ f.created_at.strftime('%Y-%m-%d') if f.created_at else '-' }}
+      </div>
+
+      <div class="mt-3">
+        <a href="{{ url_for('admin_form_detail', form_id=f.id) }}"
+           class="inline-block text-sm text-indigo-600 hover:underline">
+          View Details →
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+    <p class="text-gray-500 text-sm">No forms found.</p>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% block content %}
+
+  {{ table(
+      'Open Forms',
+      open_forms,
+      'bg-green-100 text-green-800'
+  ) }}
+
+  {{ table(
+      'In Progress Forms',
+      in_progress_forms,
+      'bg-yellow-100 text-yellow-800'
+  ) }}
+
+  {{ table(
+      'Resolved Forms',
+      resolved_forms,
+      'bg-gray-100 text-gray-800'
+  ) }}
+
+{% endblock %}
