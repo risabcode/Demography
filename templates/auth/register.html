@@ -1,23 +1,119 @@
 {% extends "auth_base.html" %}
 {% block title %}Register - Demograph{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-  <h2 class="text-2xl mb-4">Register</h2>
-  <form method="post" enctype="multipart/form-data">
-    <label class="block mb-2">Full Name
-      <input name="name" required class="w-full border px-3 py-2 rounded mt-1" />
+<h2 class="text-2xl font-bold text-gray-800 mb-1 text-center">
+  Create your account
+</h2>
+<p class="text-sm text-gray-500 text-center mb-6">
+  Join Demograph in just a few steps
+</p>
+
+<form method="post" enctype="multipart/form-data" class="space-y-5">
+
+  <!-- Full Name -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Full name
     </label>
-    <label class="block mb-2">Email
-      <input name="email" type="email" required class="w-full border px-3 py-2 rounded mt-1" />
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+        <i class="fa-solid fa-user"></i>
+      </span>
+      <input
+        name="name"
+        required
+        autocomplete="name"
+        placeholder="John Doe"
+        class="w-full pl-10 pr-3 py-2.5 rounded-lg border
+               focus:outline-none focus:ring-2 focus:ring-indigo-500
+               focus:border-indigo-500 transition"
+      />
+    </div>
+  </div>
+
+  <!-- Email -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Email address
     </label>
-    <label class="block mb-2">Password
-      <input name="password" type="password" required class="w-full border px-3 py-2 rounded mt-1" />
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+        <i class="fa-solid fa-envelope"></i>
+      </span>
+      <input
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+        placeholder="you@example.com"
+        class="w-full pl-10 pr-3 py-2.5 rounded-lg border
+               focus:outline-none focus:ring-2 focus:ring-indigo-500
+               focus:border-indigo-500 transition"
+      />
+    </div>
+  </div>
+
+  <!-- Password -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Password
     </label>
-    <label class="block mb-4">Profile Photo (optional)
-      <input name="profile_photo" type="file" accept="image/*" class="w-full" />
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+        <i class="fa-solid fa-lock"></i>
+      </span>
+      <input
+        name="password"
+        type="password"
+        required
+        autocomplete="new-password"
+        placeholder="••••••••"
+        class="w-full pl-10 pr-3 py-2.5 rounded-lg border
+               focus:outline-none focus:ring-2 focus:ring-indigo-500
+               focus:border-indigo-500 transition"
+      />
+    </div>
+    <p class="text-xs text-gray-500 mt-1">
+      Use at least 8 characters for better security
+    </p>
+  </div>
+
+  <!-- Profile Photo -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Profile photo <span class="text-gray-400">(optional)</span>
     </label>
-    <button class="w-full bg-blue-600 text-white py-2 rounded">Register</button>
-  </form>
-  <p class="mt-4 text-sm">Already have an account? <a href="{{ url_for('login') }}" class="text-blue-600">Login</a></p>
-</div>
+    <input
+      name="profile_photo"
+      type="file"
+      accept="image/*"
+      class="block w-full text-sm text-gray-500
+             file:mr-4 file:py-2 file:px-4
+             file:rounded-lg file:border-0
+             file:text-sm file:font-semibold
+             file:bg-indigo-50 file:text-indigo-700
+             hover:file:bg-indigo-100 transition"
+    />
+  </div>
+
+  <!-- Submit -->
+  <button
+    type="submit"
+    class="w-full bg-indigo-600 text-white py-2.5 rounded-lg
+           font-semibold hover:bg-indigo-700
+           focus:outline-none focus:ring-2 focus:ring-indigo-400
+           transition">
+    <i class="fa-solid fa-user-plus mr-1"></i>
+    Create account
+  </button>
+</form>
+
+<p class="mt-6 text-sm text-center text-gray-600">
+  Already have an account?
+  <a href="{{ url_for('login') }}"
+     class="text-indigo-600 font-medium hover:underline">
+    Login
+  </a>
+</p>
 {% endblock %}

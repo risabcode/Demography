@@ -1,17 +1,78 @@
 {% extends "auth_base.html" %}
 {% block title %}Login - Demograph{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-  <h2 class="text-2xl mb-4">Login</h2>
-  <form method="post">
-    <label class="block mb-2">Email
-      <input name="email" type="email" required class="w-full border px-3 py-2 rounded mt-1" />
+<h2 class="text-2xl font-bold text-gray-800 mb-1 text-center">
+  Welcome back
+</h2>
+<p class="text-sm text-gray-500 text-center mb-6">
+  Sign in to continue to Demograph
+</p>
+
+<form method="post" class="space-y-5">
+
+  <!-- Email -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Email address
     </label>
-    <label class="block mb-4">Password
-      <input name="password" type="password" required class="w-full border px-3 py-2 rounded mt-1" />
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+        <i class="fa-solid fa-envelope"></i>
+      </span>
+      <input
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+        class="w-full pl-10 pr-3 py-2.5 rounded-lg border
+               focus:outline-none focus:ring-2 focus:ring-indigo-500
+               focus:border-indigo-500 transition"
+        placeholder="you@example.com"
+      />
+    </div>
+  </div>
+
+  <!-- Password -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Password
     </label>
-    <button class="w-full bg-green-600 text-white py-2 rounded">Login</button>
-  </form>
-  <p class="mt-4 text-sm">No account? <a href="{{ url_for('register') }}" class="text-blue-600">Register</a></p>
-</div>
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+        <i class="fa-solid fa-lock"></i>
+      </span>
+      <input
+        name="password"
+        type="password"
+        required
+        autocomplete="current-password"
+        class="w-full pl-10 pr-3 py-2.5 rounded-lg border
+               focus:outline-none focus:ring-2 focus:ring-indigo-500
+               focus:border-indigo-500 transition"
+        placeholder="••••••••"
+      />
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <button
+    type="submit"
+    class="w-full bg-indigo-600 text-white py-2.5 rounded-lg
+           font-semibold hover:bg-indigo-700
+           focus:outline-none focus:ring-2 focus:ring-indigo-400
+           transition">
+    <i class="fa-solid fa-right-to-bracket mr-1"></i>
+    Login
+  </button>
+</form>
+
+<!-- Footer -->
+<p class="mt-6 text-sm text-center text-gray-600">
+  Don’t have an account?
+  <a href="{{ url_for('register') }}"
+     class="text-indigo-600 font-medium hover:underline">
+    Register
+  </a>
+</p>
 {% endblock %}
